@@ -141,16 +141,28 @@ extension HeroContext {
     // capture a snapshot without alpha, cornerRadius, or shadows
     let oldCornerRadius = view.layer.cornerRadius
     let oldAlpha = view.alpha
-		let oldShadowRadius = view.layer.shadowRadius
-		let oldShadowOffset = view.layer.shadowOffset
-		let oldShadowPath = view.layer.shadowPath
-		let oldShadowOpacity = view.layer.shadowOpacity
+    let oldShadowRadius = view.layer.shadowRadius
+    let oldShadowOffset = view.layer.shadowOffset
+    let oldShadowPath = view.layer.shadowPath
+    let oldShadowOpacity = view.layer.shadowOpacity
+
+    var oldMaskedCorners: Any
+    if #available(iOS 11.0, *) {
+      oldMaskedCorners = view.layer.maskedCorners
+    } else {
+      oldMaskedCorners = []
+    }
+
     view.layer.cornerRadius = 0
     view.alpha = 1
-		view.layer.shadowRadius = 0.0
-		view.layer.shadowOffset = .zero
-		view.layer.shadowPath = nil
-		view.layer.shadowOpacity = 0.0
+    view.layer.shadowRadius = 0.0
+    view.layer.shadowOffset = .zero
+    view.layer.shadowPath = nil
+    view.layer.shadowOpacity = 0.0
+
+    if #available(iOS 11.0, *) {
+      view.layer.maskedCorners = []
+    }
 
     let snapshot: UIView
     let snapshotType: HeroSnapshotType = self[view]?.snapshotType ?? .optimized
@@ -220,10 +232,15 @@ extension HeroContext {
 
     view.layer.cornerRadius = oldCornerRadius
     view.alpha = oldAlpha
-		view.layer.shadowRadius = oldShadowRadius
-		view.layer.shadowOffset = oldShadowOffset
-		view.layer.shadowPath = oldShadowPath
-		view.layer.shadowOpacity = oldShadowOpacity
+    view.layer.shadowRadius = oldShadowRadius
+    view.layer.shadowOffset = oldShadowOffset
+    view.layer.shadowPath = oldShadowPath
+    view.layer.shadowOpacity = oldShadowOpacity
+
+    if #available(iOS 11.0, *),
+      let maskedCorners = oldMaskedCorners as? CACornerMask {
+      view.layer.maskedCorners = maskedCorners
+    }
 
     snapshot.layer.anchorPoint = view.layer.anchorPoint
     snapshot.layer.position = containerView.convert(view.layer.position, from: view.superview!)
@@ -237,6 +254,13 @@ extension HeroContext {
         // since the snapshot might not have maskToBounds set
         contentView.layer.cornerRadius = view.layer.cornerRadius
         contentView.layer.masksToBounds = true
+        if #available(iOS 11.0, *) {
+          contentView.layer.maskedCorners = view.layer.maskedCorners
+        }
+      }
+
+      if #available(iOS 11.0, *) {
+        snapshot.layer.maskedCorners = view.layer.maskedCorners
       }
 
       snapshot.layer.allowsGroupOpacity = false
